@@ -10,12 +10,82 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  user
+  admin
+  modo
+}
+
 model User {
-  id              String @id @default(auto()) @map("_id") @db.ObjectId
-  email           String @unique
-  password        String
-  pseudo          String @unique
-  avatar          String
-  created_at      String
-  last_connection String
+  id                   String         @id @default(auto()) @map("_id") @db.ObjectId
+  email                String         @unique
+  password             String
+  pseudo               String         @unique
+  role                 Role           @default(user)
+  avatar               String
+  created_at           String
+  last_connection      String
+  posts                Post[]
+  following            Follows[]      @relation("Following")
+  followers            Follows[]      @relation("Followers")
+  likes                Like[]
+  commentaires         Commentaire[]
+  conversationsCreated Conversation[] @relation("userCreate")
+  conversationsAdded   Conversation[] @relation("userAdded")
+}
+
+model Post {
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  title        String
+  media        String
+  created_at   String
+  authorId     String        @db.ObjectId
+  author       User          @relation(fields: [authorId], references: [id])
+  likes        Like[]
+  commentaires Commentaire[]
+}
+
+model Follows {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  followerId  String @db.ObjectId
+  follower    User   @relation("Following", fields: [followerId], references: [id])
+  followingId String @db.ObjectId
+  following   User   @relation("Followers", fields: [followingId], references: [id])
+}
+
+model Like {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  status      Boolean @default(false)
+  userLikeId  String  @db.ObjectId
+  userLike    User    @relation(fields: [userLikeId], references: [id])
+  postLikedId String  @db.ObjectId
+  postLiked   Post    @relation(fields: [postLikedId], references: [id])
+}
+
+model Commentaire {
+  id            String @id @default(auto()) @map("_id") @db.ObjectId
+  body          String
+  created_at    String
+  userCommentId String @db.ObjectId
+  userComment   User   @relation(fields: [userCommentId], references: [id])
+  postCommentId String @db.ObjectId
+  postComment   Post   @relation(fields: [postCommentId], references: [id])
+}
+
+model Conversation {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  created_at    String
+  userCreatedId String    @db.ObjectId
+  userCreated   User      @relation("userCreate", fields: [userCreatedId], references: [id])
+  userAddId     String?   @db.ObjectId
+  userAdd       User?     @relation("userAdded", fields: [userAddId], references: [id])
+  messages      Message[]
+}
+
+model Message {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  body           String
+  created_at     String
+  conversationId String       @db.ObjectId
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
 }
